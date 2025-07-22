@@ -2,48 +2,42 @@ pipeline {
     agent {
         docker {
             image 'python:3.11-slim'
-            args '-u root' // optional, to allow installing packages
+            args '-u root'
         }
     }
-
-    triggers {
-        pollSCM('H/2 * * * *') // Poll GitHub every 2 minutes
+    options {
+        timestamps()
     }
-
+    triggers {
+        pollSCM('H/2 * * * *')
+    }
     environment {
         PYTHONUNBUFFERED = 1
     }
-
     stages {
         stage('Checkout Code') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
-
         stage('Install Dependencies') {
             steps {
                 sh 'pip install --upgrade pip'
                 sh 'pip install -r requirements.txt'
             }
         }
-
         stage('Run Tests') {
             steps {
-                sh 'pytest test_app.py'
+                sh '''
+                  pytest test_app.py 2>&1 | tee pytest.log
+                '''
             }
         }
     }
-
     post {
         always {
+            archiveArtifacts artifacts: 'pytest.log', onlyIfSuccessful: false
             echo 'Pipeline execution completed.'
         }
-        success {
-            echo '✅ Tests passed!'
-        }
-        failure {
-            echo '❌ Tests failed!'
-        }
+        success { echo '✅ Tests passed!' }
+        failure { echo '❌ Tests failed!' }
     }
 }
