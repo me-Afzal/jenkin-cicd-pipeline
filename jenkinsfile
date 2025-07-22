@@ -16,16 +16,32 @@ pipeline {
     }
     stages {
         stage('Checkout Code') {
-            steps { checkout scm }
+            steps {
+                echo '📥 Checking out code...'
+                checkout scm
+                sh 'ls -la'
+            }
+        }
+        stage('Check Environment') {
+            steps {
+                echo '🧾 Checking Python and Pip version...'
+                sh 'python --version'
+                sh 'pip --version'
+            }
         }
         stage('Install Dependencies') {
             steps {
-                sh 'pip install --upgrade pip'
-                sh 'pip install -r requirements.txt'
+                echo '📦 Installing dependencies...'
+                sh '''
+                  set -e
+                  pip install --upgrade pip
+                  pip install -r requirements.txt
+                '''
             }
         }
         stage('Run Tests') {
             steps {
+                echo '🧪 Running tests...'
                 sh '''
                   pytest test_app.py 2>&1 | tee pytest.log
                 '''
@@ -35,7 +51,7 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'pytest.log', onlyIfSuccessful: false
-            echo 'Pipeline execution completed.'
+            echo '🧾 Pipeline execution completed.'
         }
         success { echo '✅ Tests passed!' }
         failure { echo '❌ Tests failed!' }
