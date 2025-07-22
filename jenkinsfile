@@ -1,37 +1,49 @@
 pipeline {
-    agent { 
-        node {
-            label 'docker-agent-python'
-            }
-      }
+    agent {
+        docker {
+            image 'python:3.11-slim'
+            args '-u root' // optional, to allow installing packages
+        }
+    }
+
     triggers {
-    pollSCM('H/2 * * * *')  // Every 2 minutes
-}
+        pollSCM('H/2 * * * *') // Poll GitHub every 2 minutes
+    }
+
+    environment {
+        PYTHONUNBUFFERED = 1
+    }
+
     stages {
-        stage('Build') {
+        stage('Checkout Code') {
             steps {
-                echo "Building.."
-                sh '''
-                echo "doing build stuff.."
-                '''
+                checkout scm
             }
         }
-        stage('Test') {
+
+        stage('Install Dependencies') {
             steps {
-                echo "Testing.."
-                sh '''
-                cd app
-                python3 helloworld.py
-                '''
+                sh 'pip install --upgrade pip'
+                sh 'pip install -r requirements.txt'
             }
         }
-        stage('Deliver') {
+
+        stage('Run Tests') {
             steps {
-                echo 'Deliver....'
-                sh '''
-                echo "doing delivery stuff.."
-                '''
+                sh 'pytest test_app.py'
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+        success {
+            echo '✅ Tests passed!'
+        }
+        failure {
+            echo '❌ Tests failed!'
         }
     }
 }
