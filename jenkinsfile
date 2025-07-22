@@ -4,17 +4,15 @@ pipeline {
     }
 
     options {
-        timestamps()
+        timestamps() // Adds timestamps to the log
     }
 
     triggers {
-        pollSCM('H/2 * * * *')
+        pollSCM('H/2 * * * *') // Poll every 2 minutes
     }
 
     environment {
         PYTHONUNBUFFERED = 1
-        IMAGE_NAME = 'afzal23/jenkins-fastapi-app'
-        IMAGE_TAG = 'latest'
     }
 
     stages {
@@ -37,27 +35,7 @@ pipeline {
                 export PATH=$HOME/.local/bin:$PATH
                 set -e
                 python -m pytest test_app.py 2>&1 | tee pytest.log
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                docker build -t $IMAGE_NAME:$IMAGE_TAG .
-                '''
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker push $IMAGE_NAME:$IMAGE_TAG
-                    docker logout
-                    '''
-                }
+            '''
             }
         }
     }
