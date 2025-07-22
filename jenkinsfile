@@ -1,43 +1,36 @@
 pipeline {
-    agent {
+    agent { 
         node {
             label 'docker-agent-python'
-        }
-    }
-
+            }
+      }
     triggers {
-        // Trigger when there's a change in main branch
-        pollSCM('H/2 * * * *')  // polls every 2 minutes
+        pollSCM '* * * * *'
     }
-
-    environment {
-        PYTHONUNBUFFERED = '1'
-    }
-
     stages {
-        stage('Checkout') {
+        stage('Build') {
             steps {
-                checkout scm
+                echo "Building.."
+                sh '''
+                echo "doing build stuff.."
+                '''
             }
         }
-
-        stage('Install Dependencies') {
+        stage('Test') {
             steps {
-                echo "Installing dependencies..."
-                sh 'pip install -r requirements.txt'
+                echo "Testing.."
+                sh '''
+                cd app
+                python3 helloworld.py
+                '''
             }
         }
-
-        stage('Run Tests') {
+        stage('Deliver') {
             steps {
-                echo "Running pytest..."
-                sh 'pytest test_app.py'
-            }
-        }
-
-        stage('Post') {
-            steps {
-                echo 'Post-stage logic or deploy can go here.'
+                echo 'Deliver....'
+                sh '''
+                echo "doing delivery stuff.."
+                '''
             }
         }
     }
