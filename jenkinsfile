@@ -25,16 +25,17 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh 'pip install --upgrade pip'
-                sh 'pip install -r requirements.txt'
+                sh 'pip install --user -r requirements.txt'
             }
         }
 
         stage('Run Tests') {
             steps {
                 sh '''
-                    echo "Running tests..."
-                    pytest test_app.py 2>&1 | tee pytest.log
-                '''
+                export PATH=$HOME/.local/bin:$PATH
+                set -e
+                python -m pytest test_app.py 2>&1 | tee pytest.log
+            '''
             }
         }
     }
