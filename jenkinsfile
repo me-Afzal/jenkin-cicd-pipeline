@@ -24,7 +24,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo "Installing dependencies..."
-                sh 'pip install --only-binary=:all: -r requirements.txt'
+                sh 'pip install -r requirements.txt'
             }
         }
 
