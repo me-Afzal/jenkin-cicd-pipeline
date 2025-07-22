@@ -1,59 +1,54 @@
 pipeline {
     agent {
-        docker {
-            image 'python:3.11-slim'
-            args '-u root'
-        }
+        label 'docker-python-agent'
     }
+
     options {
-        timestamps()
+        timestamps() // Adds timestamps to the log
     }
+
     triggers {
-        pollSCM('H/2 * * * *')
+        pollSCM('H/2 * * * *') // Poll every 2 minutes
     }
+
     environment {
         PYTHONUNBUFFERED = 1
     }
+
     stages {
         stage('Checkout Code') {
             steps {
-                echo '📥 Checking out code...'
                 checkout scm
-                sh 'ls -la'
             }
         }
-        stage('Check Environment') {
-            steps {
-                echo '🧾 Checking Python and Pip version...'
-                sh 'python --version'
-                sh 'pip --version'
-            }
-        }
+
         stage('Install Dependencies') {
             steps {
-                echo '📦 Installing dependencies...'
-                sh '''
-                  set -e
-                  pip install --upgrade pip
-                  pip install -r requirements.txt
-                '''
+                sh 'pip install --upgrade pip'
+                sh 'pip install -r requirements.txt'
             }
         }
+
         stage('Run Tests') {
             steps {
-                echo '🧪 Running tests...'
                 sh '''
-                  pytest test_app.py 2>&1 | tee pytest.log
+                    echo "Running tests..."
+                    pytest test_app.py 2>&1 | tee pytest.log
                 '''
             }
         }
     }
+
     post {
         always {
             archiveArtifacts artifacts: 'pytest.log', onlyIfSuccessful: false
-            echo '🧾 Pipeline execution completed.'
+            echo '📦 Pipeline execution completed.'
         }
-        success { echo '✅ Tests passed!' }
-        failure { echo '❌ Tests failed!' }
+        success {
+            echo '✅ Tests passed successfully!'
+        }
+        failure {
+            echo '❌ Tests failed. Check pytest.log for details.'
+        }
     }
 }
